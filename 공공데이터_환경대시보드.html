@@ -1,0 +1,163 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>영암초 환경 대시보드</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #e6f7ff;
+      text-align: center;
+    }
+    header {
+      background-color: #4fc3f7;
+      color: white;
+      padding: 1rem;
+      font-size: 1.8rem;
+      font-weight: bold;
+    }
+    .sub-header {
+      font-size: 1rem;
+      color: #333;
+      margin-top: 5px;
+    }
+    .timestamp {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    .card-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      width: 180px;
+      height: 120px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .card h3 {
+      margin: 0;
+      font-size: 1rem;
+      color: #333;
+    }
+    .value {
+      font-size: 1.6rem;
+      font-weight: bold;
+    }
+    .status {
+      font-size: 1.2rem;
+      margin-top: 3px;
+    }
+    canvas {
+      max-width: 90%;
+      margin: 20px auto;
+    }
+    .character-box {
+      position: absolute;
+      bottom: 30px;
+      right: 30px;
+      font-size: 1.2rem;
+      background-color: #fff8e1;
+      padding: 10px 15px;
+      border-radius: 20px;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <header>🌤️ 영암초 실시간 환경 대시보드</header>
+  <div class="sub-header">지금은 영암군의 공기 상태를 보고 있어요!</div>
+  <div class="timestamp" id="timestamp">데이터 수집 시간: --</div>
+
+  <div class="card-container">
+    <div class="card"><h3>🌡️ 온도</h3><div class="value" id="temp">-- ℃</div><div class="status" id="tempStatus">😊</div></div>
+    <div class="card"><h3>💧 습도</h3><div class="value" id="humi">-- %</div><div class="status" id="humiStatus">😊</div></div>
+    <div class="card"><h3>🌫️ 미세먼지</h3><div class="value" id="pm10">-- μg/m³</div><div class="status" id="pm10Status">😐</div></div>
+    <div class="card"><h3>🌫️ 초미세먼지</h3><div class="value" id="pm25">-- μg/m³</div><div class="status" id="pm25Status">😐</div></div>
+  </div>
+
+  <h3 style="color:#333;">📊 초미세먼지 실시간 변화 그래프</h3>
+  <canvas id="pm25Chart" width="600" height="300"></canvas>
+
+  <div class="character-box">👧 오늘은 공기가 깨끗해요! 야외 활동하기 좋아요 🌱</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      function updateTimestamp() {
+        const now = new Date();
+        document.getElementById("timestamp").textContent =
+          "데이터 수집 시간: " + now.toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+      }
+
+      function statusText(value, good, normal, bad) {
+        if (value <= good) return "😊 좋음";
+        if (value <= normal) return "😐 보통";
+        return "😷 나쁨";
+      }
+
+      const labels = [];
+      const data = [];
+      const chart = new Chart(document.getElementById("pm25Chart").getContext("2d"), {
+        type: "line",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: "PM2.5 (μg/m³)",
+            data: data,
+            borderColor: "#4fc3f7",
+            backgroundColor: "rgba(79,195,247,0.2)",
+            fill: true,
+            tension: 0.3,
+            pointRadius: 2
+          }]
+        },
+        options: {
+          animation: false,
+          scales: {
+            y: { beginAtZero: true, suggestedMax: 100 }
+          }
+        }
+      });
+
+      function updateData() {
+        const temp = 20 + Math.random() * 10;
+        const humi = 40 + Math.random() * 30;
+        const pm10 = 30 + Math.random() * 50;
+        const pm25 = 15 + Math.random() * 35;
+
+        document.getElementById("temp").textContent = temp.toFixed(1) + " ℃";
+        document.getElementById("tempStatus").textContent = statusText(temp, 25, 30, 100);
+        document.getElementById("humi").textContent = humi.toFixed(1) + " %";
+        document.getElementById("humiStatus").textContent = statusText(humi, 40, 60, 100);
+        document.getElementById("pm10").textContent = pm10.toFixed(1) + " μg/m³";
+        document.getElementById("pm10Status").textContent = statusText(pm10, 30, 80, 200);
+        document.getElementById("pm25").textContent = pm25.toFixed(1) + " μg/m³";
+        document.getElementById("pm25Status").textContent = statusText(pm25, 15, 35, 200);
+
+        const now = new Date();
+        const label = now.getHours() + ':' + now.getMinutes().toString().padStart(2, '0');
+        labels.push(label);
+        data.push(pm25.toFixed(1));
+        if (labels.length > 24) { labels.shift(); data.shift(); }
+        chart.update();
+        updateTimestamp();
+      }
+
+      updateData();
+      setInterval(updateData, 5000);
+    });
+  </script>
+</body>
+</html>
